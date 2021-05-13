@@ -55,8 +55,14 @@ exports.handler = async function(event) {
   // get the data from the document
   let courseData = course.data()
 
+  // create an object with the course data to hold the return value from our lambda
+  let returnValue = {
+    courseNumber: courseData.courseNumber,
+    name: courseData.name
+  }
+
   // set a new Array as part of the return value
-  courseData.sections = []
+  returnValue.sections = []
 
   // ask Firebase for the sections corresponding to the Document ID of the course, wait for the response
   let sectionsQuery = await db.collection('sections').where(`courseId`, `==`, courseId).get()
@@ -71,6 +77,9 @@ exports.handler = async function(event) {
 
     // get the data from the section
     let sectionData = sections[i].data()
+    
+    // create an Object to be added to the return value of our lambda
+    let sectionObject = {}
 
     // ask Firebase for the lecturer with the ID provided by the section; hint: read "Retrieve One Document (when you know the Document ID)" in the reference
     let lecturerQuery = await db.collection('lecturers').doc(sectionData.lecturerId).get()
@@ -78,11 +87,11 @@ exports.handler = async function(event) {
     // get the data from the returned document
     let lecturer = lecturerQuery.data()
 
-    // add the lecturer's name to the section's data
-    sectionData.lecturerName = lecturer.name
+    // add the lecturer's name to the section Object
+    sectionObject.lecturerName = lecturer.name
 
-    // add the section data to the courseData
-    courseData.sections.push(sectionData)
+    // add the section Object to the return value
+    returnValue.sections.push(sectionObject)
 
     // 🔥 your code for the reviews/ratings goes here
   }
@@ -90,6 +99,6 @@ exports.handler = async function(event) {
   // return the standard response
   return {
     statusCode: 200,
-    body: JSON.stringify(courseData)
+    body: JSON.stringify(returnValue)
   }
 }
